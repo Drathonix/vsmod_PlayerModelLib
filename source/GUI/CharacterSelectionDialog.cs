@@ -1983,13 +1983,16 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 #pragma warning disable CS8620 // Argument cannot be used for parameter due to differences in the nullability of reference types. - will not be null
                 foreach (var partVariant in skinMod.GetAppliedSkinParts())
                 {
-                    SkinnablePart part = cmd.SkinParts[partCode];
-                    if (part.VariantsByCode.ContainsKey(partVariant.Code))
+                    if (partVariant.PartCode == partCode)
                     {
-                        string[] traits = variantTraits.Get(partVariant.Code) ?? [];
-                        if (traits != null)
+                        SkinnablePart part = cmd.SkinParts[partCode];
+                        if (part.VariantsByCode.ContainsKey(partVariant.Code))
                         {
-                            partTraits.AddRange(traits);
+                            string[] traits = variantTraits.Get(partVariant.Code) ?? [];
+                            if (traits != null)
+                            {
+                                partTraits.AddRange(traits);
+                            }
                         }
                     }
                 }

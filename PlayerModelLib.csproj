@@ -3,7 +3,7 @@
   <PropertyGroup>
     <ModName>Player Model Library</ModName>
     <ModType>code</ModType>
-    <ModVersion>1.25.0</ModVersion>
+    <ModVersion>1.26.0</ModVersion>
     <ModId>playermodellib</ModId>
     <Description></Description>
     <Side>Universal</Side>
@@ -15,6 +15,7 @@
   <ItemGroup>
     <ModInfoAuthors Include="Maltiez" />
     <ModInfoAuthors Include="Caliber" />
+    <ModInfoAuthors Include="Drathon" />
   </ItemGroup>
 
   <!-- Dependencies -->
