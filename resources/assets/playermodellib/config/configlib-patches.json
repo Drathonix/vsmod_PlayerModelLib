@@ -158,6 +158,12 @@
       "type": "boolean",
       "ingui": "playermodellib:setting-export_model_button",
       "default": true
+    },
+    {
+      "code": "allow_missing_shape_key_frame_warnings",
+      "type": "boolean",
+      "ingui": "playermodellib:allow_missing_shape_key_frame_warnings",
+      "default": false
     }
   ]
 }

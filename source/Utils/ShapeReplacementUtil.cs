@@ -5,7 +5,6 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
 using Vintagestory.GameContent;
-using static OpenTK.Graphics.OpenGL.GL;
 
 namespace PlayerModelLib;
 
@@ -63,7 +62,6 @@ public static partial class ShapeReplacementUtil
         {
             return;
         }
-
         GenerateShapes("", customModel, itemId, _system, currentModel, slot.Itemstack, tesselatorBehavior.entity, ref attachableShape, ref attachableCompisteShape, attachable, 1, ref willDeleteElements);
     }
 
@@ -139,9 +137,9 @@ public static partial class ShapeReplacementUtil
             return;
         }
 
-        ReplaceOverlays(stack, ref compositeShape, customModel, yadayada);
+        ReplaceOverlays(stack, ref compositeShape, customModel, yadayada, entity);
 
-        CompositeShape? oldCompositeShape = stack == null ? null : yadayada.GetAttachedShape(stack, "default")?.Clone();
+        CompositeShape? oldCompositeShape = stack == null ? null : yadayada.GetAttachedShape(stack, entity,"default")?.Clone();
         if (oldCompositeShape == null)
         {
             Log.Warn(entity.Api, typeof(ShapeReplacementUtil), $"Unable to get attached shape from '{stack?.Collectible?.Code}'");
@@ -181,7 +179,7 @@ public static partial class ShapeReplacementUtil
             return;
         }
         
-        CompositeShape? oldCompositeShape = yadayada.GetAttachedShape(stack, "default")?.Clone();
+        CompositeShape? oldCompositeShape = yadayada.GetAttachedShape(stack, entity, "default")?.Clone();
         if (oldCompositeShape == null)
         {
             return;
@@ -451,7 +449,7 @@ public static partial class ShapeReplacementUtil
             return false;
         }    
         
-        CompositeShape? oldCompositeShape = yadayada.GetAttachedShape(stack, "default")?.Clone();
+        CompositeShape? oldCompositeShape = yadayada.GetAttachedShape(stack, entity,"default")?.Clone();
         if (oldCompositeShape == null)
         {
             Log.Warn(entity.Api, typeof(ShapeReplacementUtil), $"Unable to get attached shape from '{stack.Collectible?.Code}'");
@@ -479,11 +477,11 @@ public static partial class ShapeReplacementUtil
 
         return true;
     }
-    private static void ReplaceOverlays(ItemStack? stack, ref CompositeShape? compositeShape, CustomModelData customModel, IAttachableToEntity yadayada)
+    private static void ReplaceOverlays(ItemStack? stack, ref CompositeShape? compositeShape, CustomModelData customModel, IAttachableToEntity yadayada, Entity entity)
     {
         if (stack == null) return;
         
-        CompositeShape? oldCompositeShape = yadayada.GetAttachedShape(stack, "default")?.Clone();
+        CompositeShape? oldCompositeShape = yadayada.GetAttachedShape(stack, entity, "default")?.Clone();
         if (oldCompositeShape == null) return;
 
         if (oldCompositeShape.Overlays != null)

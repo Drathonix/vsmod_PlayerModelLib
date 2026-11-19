@@ -1,6 +1,8 @@
 ﻿using HarmonyLib;
 using OverhaulLib.Utils;
+using System.Collections;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -87,6 +89,10 @@ public static class OtherPatches
                 typeof(EntityPlayer).GetMethod("onAnimControls", AccessTools.all),
                 prefix: new HarmonyMethod(AccessTools.Method(typeof(OtherPatches), nameof(EntityPlayer_onAnimControls)))
             );
+        new Harmony(harmonyId).Patch(
+                AccessTools.Method(typeof(Shape), "ResolveReferences", [typeof(ILogger), typeof(string), typeof(Dictionary<string, ShapeElement>), typeof(AnimationKeyFrame), typeof(string[])]),
+                transpiler: AccessTools.Method(typeof(OtherPatches), "Shape_ResolveReferences")
+            );
     }
 
     public static void Unpatch(string harmonyId)
@@ -104,6 +110,7 @@ public static class OtherPatches
         new Harmony(harmonyId).Unpatch(typeof(ModSystemGliding).GetMethod("get_HasGlider", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
         new Harmony(harmonyId).Unpatch(typeof(AnimationManager).GetMethod("StartAnimation", AccessTools.all, [typeof(AnimationMetaData)]), HarmonyPatchType.Prefix, harmonyId);
         new Harmony(harmonyId).Unpatch(typeof(EntityPlayer).GetMethod("onAnimControls", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
+        new Harmony(harmonyId).Unpatch(typeof(Shape).GetMethod("ResolveReferences", AccessTools.all, [typeof(ILogger), typeof(string), typeof(Dictionary<string, ShapeElement>), typeof(AnimationKeyFrame), typeof(string[])]), HarmonyPatchType.Transpiler, harmonyId);
 
         _clientApi = null;
     }
@@ -603,5 +610,18 @@ public static class OtherPatches
         fromPlayer.Entity.WatchedAttributes.MarkPathDirty("skinConfig");
         fromPlayer.BroadcastPlayerData(true);
         return false;
+    }
+
+    private static void Shape_ResolveRefsLogSuppression(ILogger errorLogger, [StringSyntax("CompositeFormat")] string format, params object[] args)
+    {
+        //playermodellib:suppress_missing_shape_key_frame_warnings
+        if (PlayerModelModSystem.Settings.AllowMissingShapeKeyFrameWarnings)
+        {
+            errorLogger.Warning(format, args);
+        }
+    }
+    private static IEnumerable<CodeInstruction> Shape_ResolveReferences(IEnumerable<CodeInstruction> insns)
+    {
+        return Transpilers.MethodReplacer(insns,AccessTools.Method(typeof(ILogger),"Warning", [typeof(string), typeof(object[])]),AccessTools.Method(typeof(OtherPatches),"Shape_ResolveRefsLogSuppression"));
     }
 }

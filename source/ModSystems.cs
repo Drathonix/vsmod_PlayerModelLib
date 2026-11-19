@@ -1,6 +1,7 @@
 ﻿using ConfigLib;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using static OpenTK.Graphics.OpenGL.GL;
 
 namespace PlayerModelLib;
 
@@ -13,6 +14,7 @@ public sealed class Settings
     public bool MultiThreadPayerShapeGeneration { get; set; } = true;
     public bool LogOffThreadTesselationErrors { get; set; } = true;
     public bool DisableCustomClassesAndTraits { get; set; } = false;
+    public bool AllowMissingShapeKeyFrameWarnings { get; set; } = false;
 }
 
 public sealed class LatePlayerModelModSystem : ModSystem
@@ -29,6 +31,7 @@ public sealed class PlayerModelModSystem : ModSystem
 {
     public static Settings Settings { get; set; } = new();
     public static event Action<ICoreAPI, Settings>? OnSettingsLoaded;
+
 
     public override void Start(ICoreAPI api)
     {
@@ -58,18 +61,18 @@ public sealed class PlayerModelModSystem : ModSystem
 
     private static void SubscribeToConfigChange(ICoreAPI api)
     {
-        ConfigLibModSystem system = api.ModLoader.GetModSystem<ConfigLibModSystem>();
+        ConfigLibModSystem ConfigSystem = api.ModLoader.GetModSystem<ConfigLibModSystem>();
 
-        system.SettingChanged += (domain, config, setting) =>
+        ConfigSystem?.SettingChanged += (domain, config, setting) =>
         {
             if (domain != "playermodellib") return;
 
             setting.AssignSettingValue(Settings);
         };
 
-        system.ConfigsLoaded += () =>
+        ConfigSystem?.ConfigsLoaded += () =>
         {
-            system.GetConfig("playermodellib")?.AssignSettingsValues(Settings);
+            ConfigSystem!.GetConfig("playermodellib")?.AssignSettingsValues(Settings);
             OnSettingsLoaded?.Invoke(api, Settings);
         };
     }

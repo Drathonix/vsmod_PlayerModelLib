@@ -50,7 +50,7 @@ public class GuiElementImageExtended : GuiElementTextBase
         if (width > 0 && height > 0)
         {
             SKSamplingOptions options = new(SKFilterMode.Nearest);
-            bitmapExternal.bmp = bitmapExternal.bmp.Resize(new SKSizeI(width, height), options);
+            bitmapExternal = new BitmapExternal(bitmapExternal.bmp.Resize(new SKSizeI(width, height), options));
         }
 
         ImageSurface imageSurface = new(Format.Argb32, bitmapExternal.Width, bitmapExternal.Height);

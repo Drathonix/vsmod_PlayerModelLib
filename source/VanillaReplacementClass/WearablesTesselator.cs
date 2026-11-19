@@ -77,10 +77,10 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
                 continue;
             }
 
-            ProcessInventory(inventoryId, inventory, ref entityShape, ref willDeleteElements);
+            ProcessInventory(inventoryId, inventory, ref entityShape, ref willDeleteElements, ref shapeIsCloned);
         }
 
-        ProcessVanillaBackpack(ref entityShape, ref willDeleteElements);
+        ProcessVanillaBackpack(ref entityShape, ref willDeleteElements, ref shapeIsCloned);
     }
 
     public override ITexPositionSource GetTextureSource(ref EnumHandling handling)
@@ -107,7 +107,7 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
         }
     }
 
-    protected virtual void ProcessInventory(string inventoryId, IInventory inventory, ref Shape entityShape, ref string[] willDeleteElements)
+    protected virtual void ProcessInventory(string inventoryId, IInventory inventory, ref Shape entityShape, ref string[] willDeleteElements, ref bool shapeIsCloned)
     {
         ImmutableArray<ItemSlot> slots = [.. inventory];
 
@@ -134,10 +134,10 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
                 continue;
             }
 
-            ProcessSlot(slot, inventory, ref entityShape, ref willDeleteElements);
+            ProcessSlot(slot, inventory, ref entityShape, ref willDeleteElements, ref shapeIsCloned);
         }
     }
-    protected virtual void ProcessSlot(ItemSlot slot, IInventory inventory, ref Shape entityShape, ref string[] willDeleteElements)
+    protected virtual void ProcessSlot(ItemSlot slot, IInventory inventory, ref Shape entityShape, ref string[] willDeleteElements, ref bool shapeIsCloned)
     {
         ItemStack? stack = slot.Itemstack;
         if (stack == null)
@@ -152,7 +152,7 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
         }
 
         string prefix = GetPrefix(stack, attachable);
-        Shape? attachableShape = GenerateAttachableShape(stack, attachable, prefix, DefaultSlotCode, out CompositeShape? compositeGearShape);
+        Shape? attachableShape = GenerateAttachableShape(stack, attachable, prefix, DefaultSlotCode, out CompositeShape? compositeGearShape,entity);
         if (attachableShape == null)
         {
             return;
@@ -173,7 +173,7 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
                 return;
             }
         }
-
+        
         BeforeWearableShapeAttached?.Invoke(this, inventory, slot, ref entityShape, ref willDeleteElements, ref attachableShape, ref compositeGearShape);
 
         if (attachableShape == null)
@@ -188,7 +188,6 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
                 attachableShape.Textures[textureCode] = texture.Base;
             }
         }
-
         float damageEffectValue = GetDamageEffectValue(stack);
         attachableShape.ResolveReferences(entity.Api.Logger, $"WearablesTesselator.ProcessSlot for '{stack.Collectible.Code}'");
         ShapeLoadingUtil.PrefixElements(attachableShape, prefix);
@@ -210,6 +209,12 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
         }
 
         Dictionary<string, CompositeTexture> attachableTextures = entity.Properties?.Client?.Textures?.ToDictionary() ?? [];
+
+        ICustomAttachableGear? customAttachableGear = stack.Collectible.GetCollectibleBehavior(typeof(ICustomAttachableGear), true) is ICustomAttachableGear gear ? gear : null;
+        if (customAttachableGear != null)
+        {
+            customAttachableGear.AddGearToShape(entityShape, slot, DefaultSlotCode, "tesselation", ref shapeIsCloned, ref willDeleteElements, attachableTextures);
+        }
 
         foreach ((string textureCode, AssetLocation texturePath) in attachableShape.Textures)
         {
@@ -257,7 +262,7 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
             AddTextureToAtlas(clientApi, textureCode, texture);
         }
     }
-    protected virtual void ProcessVanillaBackpack(ref Shape entityShape, ref string[] willDeleteElements)
+    protected virtual void ProcessVanillaBackpack(ref Shape entityShape, ref string[] willDeleteElements, ref bool shapeIsCloned)
     {
         IEnumerable<ItemSlot> backpackSlots = GetVanillaBackpackSlotsToTesselate(out IInventory? backpackInventory);
         
@@ -279,7 +284,7 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
                 continue;
             }
 
-            ProcessSlot(slot, backpackInventory, ref entityShape, ref willDeleteElements);
+            ProcessSlot(slot, backpackInventory, ref entityShape, ref willDeleteElements, ref shapeIsCloned);
         }
     }
 
@@ -308,7 +313,7 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
         string prefix = attachable.GetTexturePrefixCode(stack) ?? "";
         return prefix;
     }
-    protected virtual Shape? GenerateAttachableShape(ItemStack stack, IAttachableToEntity attachable, string prefix, string slotCode, out CompositeShape? compositeGearShape)
+    protected virtual Shape? GenerateAttachableShape(ItemStack stack, IAttachableToEntity attachable, string prefix, string slotCode, out CompositeShape? compositeGearShape, Entity entity)
     {
         if (stack.Collectible is IWearableShapeSupplier wearableShapeSupplier)
         {
@@ -320,7 +325,8 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
             }
         }
 
-        compositeGearShape = attachable.GetAttachedShape(stack, slotCode);
+
+        compositeGearShape = attachable.GetAttachedShape(stack, entity, slotCode);
         if (compositeGearShape == null || compositeGearShape.Base == null)
         {
             return null;
